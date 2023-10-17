@@ -1,27 +1,27 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { useParams, useRouter } from "next/navigation";
-import { api } from "@/convex/_generated/api";
 import { useState } from "react";
-import { Id } from "@/convex/_generated/dataModel";
-import { toast } from "sonner";
-import Spinner from "@/components/spinner";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
 import { Search, Trash, Undo } from "lucide-react";
+import { toast } from "sonner";
+
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import Spinner from "@/components/spinner";
 import { Input } from "@/components/ui/input";
 import { ConfirmModal } from "@/components/modals/confirm-modal";
 
-const TrashBox = () => {
+export const TrashBox = () => {
   const router = useRouter();
   const params = useParams();
-
-  const documents = useQuery(api.documents.getTrach);
+  const documents = useQuery(api.documents.getTrash);
   const restore = useMutation(api.documents.restore);
   const remove = useMutation(api.documents.remove);
 
   const [search, setSearch] = useState("");
 
-  const filteredDocument = documents?.filter((document) => {
+  const filteredDocuments = documents?.filter((document) => {
     return document.title.toLowerCase().includes(search.toLowerCase());
   });
 
@@ -30,16 +30,16 @@ const TrashBox = () => {
   };
 
   const onRestore = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
     documentId: Id<"documents">
   ) => {
-    e.stopPropagation();
+    event.stopPropagation();
     const promise = restore({ id: documentId });
 
     toast.promise(promise, {
       loading: "Restoring note...",
       success: "Note restored!",
-      error: "Failed to restore note.",
+      error: " Failed to restore note.",
     });
   };
 
@@ -49,26 +49,26 @@ const TrashBox = () => {
     toast.promise(promise, {
       loading: "Deleting note...",
       success: "Note deleted!",
-      error: "Failed to delete note.",
+      error: " Failed to delete note.",
     });
 
     if (params.documentId === documentId) {
       router.push("/documents");
     }
-
-    if (document === undefined) {
-      return (
-        <div className="h-full flex items-center justify-center p-4">
-          <Spinner size={"lg"} />
-        </div>
-      );
-    }
   };
+
+  if (documents === undefined) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="text-sm">
       <div className="flex items-center gap-x-1 p-2">
-        <Search className="w-4 h-4" />
+        <Search className="h-4 w-4" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -80,14 +80,14 @@ const TrashBox = () => {
         <p className="hidden last:block text-xs text-center text-muted-foreground pb-2">
           No documents found.
         </p>
-        {filteredDocument?.map((document) => (
+        {filteredDocuments?.map((document) => (
           <div
             key={document._id}
             role="button"
             onClick={() => onClick(document._id)}
             className="text-sm rounded-sm w-full hover:bg-primary/5 flex items-center text-primary justify-between"
           >
-            <span>{document.title}</span>
+            <span className="truncate pl-2">{document.title}</span>
             <div className="flex items-center">
               <div
                 onClick={(e) => onRestore(e, document._id)}
@@ -111,5 +111,3 @@ const TrashBox = () => {
     </div>
   );
 };
-
-export default TrashBox;
